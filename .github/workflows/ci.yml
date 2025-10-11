@@ -19,4 +19,4 @@ jobs:
         cache: maven # Cache Maven dependencies
 
     - name: Build with Maven and Run Tests
-      run: mvn clean install -P bdd-tests # Build and run tests
+      run: mvn clean install -P all-tests # Build and run tests
