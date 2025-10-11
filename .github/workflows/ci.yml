@@ -1,0 +1,22 @@
+name: Maven CI with Testcontainers
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # Or other suitable runner
+
+    steps:
+    - uses: actions/checkout@v4 # Checkout your repository
+    - name: Set up JDK 25
+      uses: actions/setup-java@v4
+      with:
+        java-version: '25'
+        distribution: 'temurin'
+        cache: maven # Cache Maven dependencies
+
+    - name: Build with Maven and Run Tests
+      run: mvn clean install -P all-tests # Build and run tests
