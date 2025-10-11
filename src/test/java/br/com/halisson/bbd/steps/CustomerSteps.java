@@ -3,9 +3,17 @@ package br.com.halisson.bbd.steps;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.Optional;
+
+import org.springframework.http.HttpStatus;
+
+import br.com.halisson.Customer;
+import br.com.halisson.CustomerInsertionDto;
 import br.com.halisson.CustomerRepository;
+import br.com.halisson.CustomerUpdateDto;
 import br.com.halisson.bdd.config.CucumberSpringConfiguration;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -34,14 +42,16 @@ public class CustomerSteps extends CucumberSpringConfiguration{
 	
 	@Then("Should be displayed a NotFound status")
 	public void should_be_displayed_a_not_found_status() {
-	    // Write code here that turns the phrase above into concrete actions
-	    throw new io.cucumber.java.PendingException();
+		response
+			.then()
+				.statusCode(HttpStatus.NOT_FOUND.value());
 	}
 	
-	@Given("I have a customer with ID {int} that not exists")
-	public void have_customer_with_id_that_not_exists(Integer int1) {
-	    // Write code here that turns the phrase above into concrete actions
-	    throw new io.cucumber.java.PendingException();
+	@Given("I have a customer with ID {long} that not exists")
+	public void have_customer_with_id_that_not_exists(Long id) {
+		
+		Optional<Customer> optionalCustomer = customerRepository.findById(id);
+		assertFalse(optionalCustomer.isPresent());
 	}
 	
 	//Scenario: Getting a information about all customers	
@@ -54,11 +64,11 @@ public class CustomerSteps extends CucumberSpringConfiguration{
 	}
 	
 	@Then("The data of {int} customers should be displayed")
-	public void the_data_of_customers_should_be_displayed(Integer int1) {
+	public void the_data_of_customers_should_be_displayed(Integer qtd) {
 		response
 			.then()
-				.statusCode(200)
-				.body(".", hasSize(2))
+				.statusCode(HttpStatus.OK.value())
+				.body(".", hasSize(qtd))
 				.body("[0].id", is(1))
 	            .body("[0].name", is("Sarah"))
 	            .body("[0].email", is("sarah@mail.com"))
@@ -69,54 +79,91 @@ public class CustomerSteps extends CucumberSpringConfiguration{
 	}
 	
 	//Scenario: Getting a information about a customer
-	@When("I get customer with ID {int}")
-	public void get_product_with_id(Integer int1) {
-	    // Write code here that turns the phrase above into concrete actions
-	    throw new io.cucumber.java.PendingException();
+	@When("I get customer with ID {long}")
+	public void get_product_with_id(Long id) {
+		response = given(buildRequestSpecification()).contentType(ContentType.JSON)
+				.pathParam("id", id)
+				.when()
+					.get(API_CUSTOMERS_PATH + "/{id}")
+					.prettyPeek();
 	}
-	@Then("The data of customer with ID {int} should be displayed")
-	public void data_of_customer_with_id_should_be_displayed(Integer int1) {
-	    // Write code here that turns the phrase above into concrete actions
-	    throw new io.cucumber.java.PendingException();
+	
+	@Then("The data of customer with ID {long} should be displayed")
+	public void data_of_customer_with_id_should_be_displayed(Long id) {
+		response
+			.then()
+				.statusCode(HttpStatus.OK.value())
+				.body("id", is(1))
+	            .body("name", is("Sarah"))
+	            .body("email", is("sarah@mail.com"));
 	}
 
 	//Scenario: Trying to get a customer that not exists
-	@When("I get customer with ID {int} that not exists")
-	public void get_customer_with_id_that_not_exists(Integer int1) {
-	    // Write code here that turns the phrase above into concrete actions
-	    throw new io.cucumber.java.PendingException();
+	@When("I get customer with ID {long} that not exists")
+	public void get_customer_with_id_that_not_exists(Long id) {
+		response = given(buildRequestSpecification()).contentType(ContentType.JSON)
+				.pathParam("id", id)
+				.when()
+					.get(API_CUSTOMERS_PATH+"/{id}")
+					.prettyPeek();
 	}
 	
 	//Scenario: Saving a customer
 	@When("I save a new customer")
 	public void save_new_customer() {
-	    // Write code here that turns the phrase above into concrete actions
-	    throw new io.cucumber.java.PendingException();
+		CustomerInsertionDto request = new CustomerInsertionDto("Alice Brown", "alice@example.com");
+		
+		response = given(buildRequestSpecification())
+					.contentType(ContentType.JSON)
+					.body(request)
+				.when()
+					.post(API_CUSTOMERS_PATH)
+					.prettyPeek();
 	}
 	@Then("The data of customer saved should be displayed")
 	public void data_of_customer_saved_should_be_displayed() {
-	    // Write code here that turns the phrase above into concrete actions
-	    throw new io.cucumber.java.PendingException();
+		response
+			.then()
+				.statusCode(HttpStatus.CREATED.value())
+				.body("id", is(3))
+	            .body("name", is("Alice Brown"))
+	            .body("email", is("alice@example.com"));
 	}
 	
 	//Scenario: Updating a customer
-	@When("I update a customer with ID {int}")
-	public void update_customer_with_id(Integer int1) {
-	    // Write code here that turns the phrase above into concrete actions
-	    throw new io.cucumber.java.PendingException();
+	@When("I update a customer with ID {long}")
+	public void update_customer_with_id(Long id) {
+		CustomerUpdateDto request = new CustomerUpdateDto(id, "Alice Brown", "alice@example.com");
+		
+		response = given(buildRequestSpecification())
+					.contentType(ContentType.JSON)
+					.body(request)
+				.when()
+					.put(API_CUSTOMERS_PATH)
+					.prettyPeek();
 	}
 	@Then("The data of customer updated should be displayed")
 	public void data_of_customer_updated_should_be_displayed() {
-	    // Write code here that turns the phrase above into concrete actions
-	    throw new io.cucumber.java.PendingException();
+		response
+			.then()
+				.statusCode(HttpStatus.OK.value())
+				.body("id", is(1))
+	            .body("name", is("Alice Brown"))
+	            .body("email", is("alice@example.com"));
 	}
 	
 	//Scenario: Updating a customer that not exists
-	@When("I update customer with ID {int} that not exists")
-	public void update_customer_with_id_that_not_exists(Integer int1) {
-	    // Write code here that turns the phrase above into concrete actions
-	    throw new io.cucumber.java.PendingException();
+	@When("I update customer with ID {long} that not exists")
+	public void update_customer_with_id_that_not_exists(Long id) {
+		
+		CustomerUpdateDto request = new CustomerUpdateDto(id, "Alice Brown", "alice@example.com");
+		
+		response = given(buildRequestSpecification())
+					.contentType(ContentType.JSON)
+					.body(request)
+				.when()
+					.put(API_CUSTOMERS_PATH)
+					.prettyPeek();
 	}
-
 
 }
