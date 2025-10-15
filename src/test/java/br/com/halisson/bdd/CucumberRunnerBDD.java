@@ -24,7 +24,7 @@ import org.junit.platform.suite.api.Suite;
                         "json:target/cucumber-reports/cucumber.json"
         ),
         @ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "br.com.halisson"),
-        @ConfigurationParameter(key = FILTER_TAGS_PROPERTY_NAME, value = "@controller or @teste"),
+        @ConfigurationParameter(key = FILTER_TAGS_PROPERTY_NAME, value = "@controller or @teste or @cdc"),
         @ConfigurationParameter(key = PLUGIN_PUBLISH_QUIET_PROPERTY_NAME, value = "true"),
         @ConfigurationParameter(key = JUNIT_PLATFORM_NAMING_STRATEGY_PROPERTY_NAME, value = "long")
 })

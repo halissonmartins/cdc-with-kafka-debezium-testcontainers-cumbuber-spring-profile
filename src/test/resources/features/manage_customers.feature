@@ -2,7 +2,7 @@
 Feature: Manage customers
   As a user,
   I want to manage all customers
-  So that I can  have the customer data updated.
+  So that I can have the customer data updated.
 
   @controller
   Scenario: Getting a information about all customers
