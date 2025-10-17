@@ -197,7 +197,7 @@ public class ReplicateCustomersSteps extends CucumberSpringConfiguration {
 
 		List<ConsumerRecord<String, String>> allRecords = new ArrayList<>();
 
-		Unreliables.retryUntilTrue(10, TimeUnit.SECONDS, () -> {
+		Unreliables.retryUntilTrue(20, TimeUnit.SECONDS, () -> {
 			consumer.poll(Duration.ofMillis(50)).iterator().forEachRemaining(allRecords::add);
 			
 			log.info("allRecordsDrained {}", allRecords.size());

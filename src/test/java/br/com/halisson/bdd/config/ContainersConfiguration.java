@@ -22,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 @Testcontainers
 public abstract class ContainersConfiguration {
 
+	private static final String CONNECTOR_NAME = "my-connector";
+
 	protected static final String TOPIC_PREFIX = "dbserver1";
 
 	private static final Network NETWORK = Network.newNetwork();
@@ -34,7 +36,7 @@ public abstract class ContainersConfiguration {
 					MountableFile.forClasspathResource(
 							"./db/init_source.sql"),
 							"/docker-entrypoint-initdb.d/init.sql")
-			.withLogConsumer(new Slf4jLogConsumer(log).withPrefix("Postgres"))
+			.withLogConsumer(new Slf4jLogConsumer(log).withPrefix("Postgres-Source"))
 			.withDatabaseName("customer_source_db")
 			.withCommand("postgres -c wal_level=logical")
 			.withReuse(true);
@@ -46,7 +48,7 @@ public abstract class ContainersConfiguration {
 		.withReuse(true);
 
 	@Container
-	public static final DebeziumContainer DEBEZIUM = new DebeziumContainer("quay.io/debezium/connect:3.2.4.Final")
+	public static final DebeziumContainer DEBEZIUM = DebeziumContainer.latestStable()
 			.withNetwork(NETWORK)
 			.withKafka(KAFKA)
 			.dependsOn(KAFKA)
@@ -66,7 +68,7 @@ public abstract class ContainersConfiguration {
 				.with("topic.prefix", TOPIC_PREFIX);
 		
 		log.info("\n============================" + "\n######## REGISTRING CONNECTOR" + "\n============================");
-		DEBEZIUM.registerConnector("my-connector", connector);
+		DEBEZIUM.registerConnector(CONNECTOR_NAME, connector);		
 
 	}	
 
@@ -87,4 +89,5 @@ public abstract class ContainersConfiguration {
         registry.add("spring.kafka.bootstrap-servers", KAFKA::getBootstrapServers);
         registry.add("kafka.security.protocol", ContainersConfiguration::securityProtocol);
 	}
+
 }
