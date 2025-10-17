@@ -14,12 +14,15 @@ import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
+import io.debezium.testing.testcontainers.ConnectorConfiguration;
 import io.debezium.testing.testcontainers.DebeziumContainer;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Testcontainers
 public abstract class ContainersConfiguration {
+
+	protected static final String TOPIC_PREFIX = "dbserver1";
 
 	private static final Network NETWORK = Network.newNetwork();
 
@@ -31,16 +34,15 @@ public abstract class ContainersConfiguration {
 					MountableFile.forClasspathResource(
 							"./db/init_source.sql"),
 							"/docker-entrypoint-initdb.d/init.sql")
-			.withLogConsumer(new Slf4jLogConsumer(log))
-			//TODO CHECK TOPIC NAME WHEN CHANGE DATABASE NAME
-			//.withDatabaseName("customer_source_db")
+			.withLogConsumer(new Slf4jLogConsumer(log).withPrefix("Postgres"))
+			.withDatabaseName("customer_source_db")
 			.withCommand("postgres -c wal_level=logical")
 			.withReuse(true);
 
 	@Container
 	public static final KafkaContainer KAFKA = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.9.4"))
 		.withNetwork(NETWORK)
-		.withLogConsumer(new Slf4jLogConsumer(log))
+		.withLogConsumer(new Slf4jLogConsumer(log).withPrefix("Kafka"))
 		.withReuse(true);
 
 	@Container
@@ -48,7 +50,7 @@ public abstract class ContainersConfiguration {
 			.withNetwork(NETWORK)
 			.withKafka(KAFKA)
 			.dependsOn(KAFKA)
-			.withLogConsumer(new Slf4jLogConsumer(log))
+			.withLogConsumer(new Slf4jLogConsumer(log).withPrefix("Debezium"))
 			.withReuse(true);
 
 	static {
@@ -56,7 +58,15 @@ public abstract class ContainersConfiguration {
 		log.info("\n============================" + "\n######## CREATING IMAGES" + "\n============================");
 
 		// Start containers before testing
-		Startables.deepStart(Stream.of(POSTGRES_SOURCE, KAFKA, DEBEZIUM)).join();
+		Startables.deepStart(Stream.of(POSTGRES_SOURCE, KAFKA, DEBEZIUM)).join();	
+		
+		
+		log.info("\n============================" + "\n######## CREATING CONNECTOR" + "\n============================");
+		ConnectorConfiguration connector = ConnectorConfiguration.forJdbcContainer(POSTGRES_SOURCE)
+				.with("topic.prefix", TOPIC_PREFIX);
+		
+		log.info("\n============================" + "\n######## REGISTRING CONNECTOR" + "\n============================");
+		DEBEZIUM.registerConnector("my-connector", connector);
 
 	}	
 

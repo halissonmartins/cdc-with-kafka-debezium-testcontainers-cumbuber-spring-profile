@@ -33,7 +33,6 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import io.debezium.testing.testcontainers.ConnectorConfiguration;
 import io.restassured.http.ContentType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class ReplicateCustomersSteps extends CucumberSpringConfiguration {	
-	
+
 	private static final UUID RANDOM_UUID = UUID.randomUUID();
 
 	private static final String EMAIL_TO_UPDATE = "john@example.com";
@@ -52,47 +51,35 @@ public class ReplicateCustomersSteps extends CucumberSpringConfiguration {
 	
 	private CustomerUpdateDto customerUpdateDto;
 	
-	private int expectedSize;
 	private String expectedOperation;
-	
-	static {
-		
-		log.info("Running static ReplicateCustomersSteps");
-		
-		ConnectorConfiguration connector = ConnectorConfiguration.forJdbcContainer(POSTGRES_SOURCE)
-				.with("topic.prefix", "dbserver1");
-		
-		DEBEZIUM.registerConnector("my-connector", connector);
-		
-	}
 
 	//Common
 	@Then("A replication event should be published to the message broker")
 	public void a_replication_event_should_be_published_to_the_message_broker() {
 		try (KafkaConsumer<String, String> consumer = getConsumer(KAFKA)) {
 
-			consumer.subscribe(Arrays.asList("dbserver1.testcontainers.customers"));
+			consumer.subscribe(Arrays.asList(TOPIC_PREFIX+".testcontainers.customers"));
 
-			List<ConsumerRecord<String, String>> changeEvents = drain(consumer, expectedSize);
+			List<ConsumerRecord<String, String>> changeEvents = drain(consumer, 1);
 
 			//Getting the index of last registry inserted
 			int index = changeEvents.size() - 1;
 			
-			log.info("EventJpa0: {}", changeEvents.get(index));
+			log.info("EventJpa{}: {}", index, changeEvents.get(index));
 			assertThat(JsonPath.<Integer>read(changeEvents.get(index).key(), "$.id")).isEqualTo(4);
 			assertThat(JsonPath.<String>read(changeEvents.get(index).value(), "$.op")).isEqualTo(expectedOperation);
 			
 			String name = null;
 			String email = null;
 			
-			if(expectedOperation.equals("r")) {
+			if(expectedOperation.equals("c")) {
 				name = customerInsertionDto.name();
 				email = customerInsertionDto.email();
-			}
-			
-			if(expectedOperation.equals("u")) {
+			}else if(expectedOperation.equals("u")) {
 				name = customerUpdateDto.name();
 				email = customerUpdateDto.email();
+			}else {
+				throw new IllegalArgumentException("Operation not expected.");
 			}
 			
 			assertThat(JsonPath.<String>read(changeEvents.get(index).value(), "$.after.name")).isEqualTo(name);
@@ -127,8 +114,7 @@ public class ReplicateCustomersSteps extends CucumberSpringConfiguration {
 		            .body("name", is(customerInsertionDto.name()))
 		            .body("email", is(customerInsertionDto.email()));
 		
-		expectedSize = 4;
-		expectedOperation = "r";
+		expectedOperation = "c";
 	}
 	
 	@And("The customer with ID {long} should be persisted in the database")
@@ -176,7 +162,6 @@ public class ReplicateCustomersSteps extends CucumberSpringConfiguration {
 		            .body("name", is(customerUpdateDto.name()))
 		            .body("email", is(customerUpdateDto.email()));
 		
-		expectedSize = 1;
 		expectedOperation = "u";
 	}
 	
