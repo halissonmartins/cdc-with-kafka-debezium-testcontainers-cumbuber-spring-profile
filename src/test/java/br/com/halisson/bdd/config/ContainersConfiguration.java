@@ -30,7 +30,6 @@ public abstract class ContainersConfiguration {
 
 	@Container
 	public static final PostgreSQLContainer<?> POSTGRES_SOURCE = new PostgreSQLContainer<>("postgres:18")
-				//DockerImageName.parse("quay.io/debezium/postgres:18").asCompatibleSubstituteFor("postgres"))
 			.withNetwork(NETWORK)
 			.withNetworkAliases("postgres")
 			.withCopyFileToContainer(
@@ -50,7 +49,6 @@ public abstract class ContainersConfiguration {
 
 	@Container
 	public static final DebeziumContainer DEBEZIUM = new DebeziumContainer("quay.io/debezium/connect:3.3.1.Final")
-				//DebeziumContainer.latestStable()
 			.withNetwork(NETWORK)
 			.withKafka(KAFKA)
 			.dependsOn(KAFKA, POSTGRES_SOURCE)
