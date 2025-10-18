@@ -1,5 +1,7 @@
 package br.com.halisson.bdd.config;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.stream.Stream;
 
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -14,6 +16,7 @@ import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
+import io.debezium.testing.testcontainers.Connector.State;
 import io.debezium.testing.testcontainers.ConnectorConfiguration;
 import io.debezium.testing.testcontainers.DebeziumContainer;
 import lombok.extern.slf4j.Slf4j;
@@ -70,7 +73,11 @@ public abstract class ContainersConfiguration {
 				.with("topic.prefix", TOPIC_PREFIX);
 		
 		log.info("\n============================" + "\n######## REGISTRING CONNECTOR" + "\n============================");
-		DEBEZIUM.registerConnector(CONNECTOR_NAME, connector);		
+		DEBEZIUM.registerConnector(CONNECTOR_NAME, connector);	
+		
+		//Checking if Ok with connector
+		assertThat(DEBEZIUM.isConnectorConfigured(CONNECTOR_NAME)).isTrue();
+		assertThat(DEBEZIUM.getConnectorState(CONNECTOR_NAME)).isEqualTo(State.RUNNING);
 
 	}	
 
