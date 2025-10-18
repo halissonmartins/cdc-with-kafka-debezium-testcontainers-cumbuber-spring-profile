@@ -18,6 +18,8 @@
 	<properties>
 		<java.version>25</java.version>
 		<cucumber.version>7.27.2</cucumber.version> <!-- TODO check latest version-->
+		<debezium-testing-testcontainers.version>3.3.1.Final</debezium-testing-testcontainers.version>
+		<junit-bom.version>5.13.1</junit-bom.version>
 	</properties>
 	
 	<dependencies>
@@ -134,7 +136,7 @@
 		<dependency>
 			<groupId>io.debezium</groupId>
 			<artifactId>debezium-testing-testcontainers</artifactId>
-			<version>3.2.0.Final</version>
+			<version>${debezium-testing-testcontainers.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
@@ -144,7 +146,7 @@
 	        <dependency>
 	            <groupId>org.junit</groupId>
 	            <artifactId>junit-bom</artifactId>
-	            <version>5.13.1</version>
+	            <version>${junit-bom.version}</version>
 	            <type>pom</type>
 	            <scope>import</scope>
 	        </dependency>

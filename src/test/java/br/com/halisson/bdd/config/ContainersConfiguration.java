@@ -29,9 +29,10 @@ public abstract class ContainersConfiguration {
 	private static final Network NETWORK = Network.newNetwork();
 
 	@Container
-	public static final PostgreSQLContainer<?> POSTGRES_SOURCE = new PostgreSQLContainer<>(
-			DockerImageName.parse("quay.io/debezium/postgres:18").asCompatibleSubstituteFor("postgres"))
-			.withNetwork(NETWORK).withNetworkAliases("postgres")
+	public static final PostgreSQLContainer<?> POSTGRES_SOURCE = new PostgreSQLContainer<>("postgres:18")
+				//DockerImageName.parse("quay.io/debezium/postgres:18").asCompatibleSubstituteFor("postgres"))
+			.withNetwork(NETWORK)
+			.withNetworkAliases("postgres")
 			.withCopyFileToContainer(
 					MountableFile.forClasspathResource(
 							"./db/init_source.sql"),
@@ -48,10 +49,11 @@ public abstract class ContainersConfiguration {
 		.withReuse(true);
 
 	@Container
-	public static final DebeziumContainer DEBEZIUM = DebeziumContainer.latestStable()
+	public static final DebeziumContainer DEBEZIUM = new DebeziumContainer("quay.io/debezium/connect:3.3.1.Final")
+				//DebeziumContainer.latestStable()
 			.withNetwork(NETWORK)
 			.withKafka(KAFKA)
-			.dependsOn(KAFKA)
+			.dependsOn(KAFKA, POSTGRES_SOURCE)
 			.withLogConsumer(new Slf4jLogConsumer(log).withPrefix("Debezium"))
 			.withReuse(true);
 
@@ -64,7 +66,9 @@ public abstract class ContainersConfiguration {
 		
 		
 		log.info("\n============================" + "\n######## CREATING CONNECTOR" + "\n============================");
-		ConnectorConfiguration connector = ConnectorConfiguration.forJdbcContainer(POSTGRES_SOURCE)
+		ConnectorConfiguration connector = ConnectorConfiguration.forJdbcContainer(POSTGRES_SOURCE)				
+        		.with("plugin.name", "pgoutput") //It is required when using Postgres container
+        		.with("publication.name", "debezium_pub") //It is required when using Postgres container
 				.with("topic.prefix", TOPIC_PREFIX);
 		
 		log.info("\n============================" + "\n######## REGISTRING CONNECTOR" + "\n============================");
