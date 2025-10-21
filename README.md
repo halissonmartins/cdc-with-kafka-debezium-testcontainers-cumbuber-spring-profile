@@ -107,7 +107,7 @@ This repository is ideal for developers looking to explore or implement CDC solu
 - [ ] Use Confluent Connect container, Connector and Sink
 - [ ] Use MS SQL as source database
 - [ ] Use DB2 as target database
-- [ ] Fix problem when build with GitHub Actions
+- [X] Fix problem when build with GitHub Actions
 - [ ] Add playground projects
 - [ ] Configure to delete all containers when application stop (integration Spring and Compose)
 
