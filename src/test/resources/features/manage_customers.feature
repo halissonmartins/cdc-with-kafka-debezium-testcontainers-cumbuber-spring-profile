@@ -2,7 +2,7 @@
 Feature: Manage customers
   As a user,
   I want to manage all customers
-  So that I can  have the customer data updated.
+  So that I can have the customer data updated.
 
   @controller
   Scenario: Getting a information about all customers
@@ -31,7 +31,7 @@ Feature: Manage customers
   @controller
   Scenario: Updating a customer
     Given I have 3 customers included
-    When I update a customer with ID 1
+    When I update a customer with ID 3
     Then The data of customer updated should be displayed
 
   @controller

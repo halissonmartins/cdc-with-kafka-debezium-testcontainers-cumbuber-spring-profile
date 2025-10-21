@@ -25,10 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
-public class CustomerSteps extends CucumberSpringConfiguration{
+public class ManageCustomersSteps extends CucumberSpringConfiguration{
 	
-	private static final String API_CUSTOMERS_PATH = "/customers";
-
 	private final CustomerRepository customerRepository;
 
 	private Response response;
@@ -147,7 +145,7 @@ public class CustomerSteps extends CucumberSpringConfiguration{
 		response
 			.then()
 				.statusCode(HttpStatus.OK.value())
-				.body("id", is(1))
+				.body("id", is(3))
 	            .body("name", is("Alice Brown"))
 	            .body("email", is("alice@example.com"));
 	}

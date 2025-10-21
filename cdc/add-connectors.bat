@@ -1,0 +1,2 @@
+curl -X POST  -H  "Content-Type:application/json; charset=utf-8" http://localhost:8083/connectors -d @from_source.json
+curl -X POST  -H  "Content-Type:application/json; charset=utf-8" http://localhost:8083/connectors -d @to_target.json

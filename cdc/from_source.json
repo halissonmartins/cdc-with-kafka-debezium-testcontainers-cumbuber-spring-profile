@@ -1,0 +1,28 @@
+{
+  "name": "postgres-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "tasks.max": "1",
+    "database.hostname": "postgres_source",
+    "database.port": "5432",
+    "database.user": "user",
+    "database.password": "123456",
+	"database.dbname": "customer_source_db",
+	"database.server.name": "postgres_source",
+    "schema.history.internal.kafka.bootstrap.servers": "kafka:9092",
+    "schema.history.internal.kafka.topic": "history.postgres_source",
+    "database.server.id": "184054",
+	"database.allowPublicKeyRetrieval": "true",
+	"schema.include.list": "testcontainers",
+	"table.include.list": "testcontainers.customers",
+	"tombstones.on.delete": "false",
+    "topic.prefix": "from",
+    "transforms": "unwrap",
+	"plugin.name": "pgoutput",
+    "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+	"slot.name": "from_application_connector_slot",
+	"value.converter": "org.apache.kafka.connect.json.JsonConverter",
+	"value.converter.schemas.enable": "true",
+	"time.precision.mode":"connect"
+  }
+}
