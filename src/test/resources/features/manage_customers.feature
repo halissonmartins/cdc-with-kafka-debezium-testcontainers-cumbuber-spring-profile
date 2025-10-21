@@ -31,7 +31,7 @@ Feature: Manage customers
   @controller
   Scenario: Updating a customer
     Given I have 3 customers included
-    When I update a customer with ID 1
+    When I update a customer with ID 3
     Then The data of customer updated should be displayed
 
   @controller

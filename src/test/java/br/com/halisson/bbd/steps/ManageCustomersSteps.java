@@ -145,7 +145,7 @@ public class ManageCustomersSteps extends CucumberSpringConfiguration{
 		response
 			.then()
 				.statusCode(HttpStatus.OK.value())
-				.body("id", is(1))
+				.body("id", is(3))
 	            .body("name", is("Alice Brown"))
 	            .body("email", is("alice@example.com"));
 	}

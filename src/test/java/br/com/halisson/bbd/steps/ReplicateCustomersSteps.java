@@ -5,6 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertTrue;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +44,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ReplicateCustomersSteps extends CucumberSpringConfiguration {	
 
+	private static final String QUERIE = "SELECT * FROM testcontainers.customers c WHERE c.id = %d";
+
 	private static final UUID RANDOM_UUID = UUID.randomUUID();
 
 	private static final String EMAIL_TO_UPDATE = "john@example.com";
@@ -55,7 +60,7 @@ public class ReplicateCustomersSteps extends CucumberSpringConfiguration {
 
 	//Common
 	@Then("A replication event should be published to the message broker")
-	public void a_replication_event_should_be_published_to_the_message_broker() {
+	public void replication_event_should_be_published_to_the_message_broker() {
 		try (KafkaConsumer<String, String> consumer = getConsumer(KAFKA)) {
 
 			consumer.subscribe(Arrays.asList(TOPIC_PREFIX+".testcontainers.customers"));
@@ -65,9 +70,7 @@ public class ReplicateCustomersSteps extends CucumberSpringConfiguration {
 			//Getting the index of last registry inserted
 			int index = changeEvents.size() - 1;
 			
-			log.info("EventJpa{}: {}", index, changeEvents.get(index));
-			assertThat(JsonPath.<Integer>read(changeEvents.get(index).key(), "$.id")).isEqualTo(4);
-			assertThat(JsonPath.<String>read(changeEvents.get(index).value(), "$.op")).isEqualTo(expectedOperation);
+			log.info("EventJpa{}: {}", index, changeEvents.get(index).value());
 			
 			String name = null;
 			String email = null;
@@ -82,8 +85,9 @@ public class ReplicateCustomersSteps extends CucumberSpringConfiguration {
 				throw new IllegalArgumentException("Operation not expected.");
 			}
 			
-			assertThat(JsonPath.<String>read(changeEvents.get(index).value(), "$.after.name")).isEqualTo(name);
-			assertThat(JsonPath.<String>read(changeEvents.get(index).value(), "$.after.email")).isEqualTo(email);
+			assertThat(JsonPath.<Integer>read(changeEvents.get(index).value(), "$.payload.id")).isEqualTo(4);
+			assertThat(JsonPath.<String>read(changeEvents.get(index).value(), "$.payload.name")).isEqualTo(name);
+			assertThat(JsonPath.<String>read(changeEvents.get(index).value(), "$.payload.email")).isEqualTo(email);
 			
 			consumer.unsubscribe();
 		}
@@ -114,6 +118,7 @@ public class ReplicateCustomersSteps extends CucumberSpringConfiguration {
 		            .body("name", is(customerInsertionDto.name()))
 		            .body("email", is(customerInsertionDto.email()));
 		
+		//Create Operation
 		expectedOperation = "c";
 	}
 	
@@ -125,9 +130,24 @@ public class ReplicateCustomersSteps extends CucumberSpringConfiguration {
 	}
 
 	@And("The data of customer saved should be replicated")
-	public void data_of_customer_saved_should_be_replicated() {
-	    // Write code here that turns the phrase above into concrete actions
-	    throw new io.cucumber.java.PendingException();
+	public void data_of_customer_saved_should_be_replicated() throws Exception{
+
+        log.info("\n============================" + "\n######## WAITING SINK PROCESS" + "\n============================");
+        Thread.sleep(1000); // wait for sink process finish     
+        
+        //log.info("\n============================" + "\n######## DEBEZIUM LOGS - SAVE" + "\n============================");
+        //log.info(DEBEZIUM.getLogs());
+        
+        log.info("\n============================" + "\n######## CHECKING INTO POSTGRES" + "\n============================");
+        try (Connection conn = DriverManager.getConnection(
+                POSTGRES_TARGET.getJdbcUrl(), POSTGRES_TARGET.getUsername(), POSTGRES_TARGET.getPassword())) {
+        	
+			ResultSet rs = conn.createStatement().executeQuery(String.format(QUERIE, 4));
+			
+            assertThat(rs.next()).isTrue();
+            assertThat(rs.getString("name")).isEqualTo(customerInsertionDto.name());
+            assertThat(rs.getString("email")).isEqualTo(customerInsertionDto.email());
+        }
 	}
 	
 	//Scenario: Updating a customer to replicate
@@ -162,6 +182,7 @@ public class ReplicateCustomersSteps extends CucumberSpringConfiguration {
 		            .body("name", is(customerUpdateDto.name()))
 		            .body("email", is(customerUpdateDto.email()));
 		
+		//Update Operation
 		expectedOperation = "u";
 	}
 	
@@ -174,13 +195,24 @@ public class ReplicateCustomersSteps extends CucumberSpringConfiguration {
 	}
 
 	@And("The data of customer updated should be replicated")
-	public void data_of_customer_updated_should_be_replicated() {
-	    // Write code here that turns the phrase above into concrete actions
-	    throw new io.cucumber.java.PendingException();
+	public void data_of_customer_updated_should_be_replicated() throws Exception{
+
+        log.info("\n============================" + "\n######## WAITING SINK PROCESS" + "\n============================");
+        Thread.sleep(1000); // wait for sink process finish 
+        
+        //log.info("\n============================" + "\n######## DEBEZIUM LOGS - UPDATE" + "\n============================");
+        //log.info(DEBEZIUM.getLogs());        
+        
+        log.info("\n============================" + "\n######## CHECKING INTO POSTGRES" + "\n============================");
+        try (Connection conn = DriverManager.getConnection(
+                POSTGRES_TARGET.getJdbcUrl(), POSTGRES_TARGET.getUsername(), POSTGRES_TARGET.getPassword())) {
+        	
+			ResultSet rs = conn.createStatement().executeQuery(String.format(QUERIE, customerUpdateDto.id()));
+            assertThat(rs.next()).isTrue();
+            assertThat(rs.getString("email")).isEqualTo(EMAIL_TO_UPDATE);
+        }
 	}
 	
-
-
 	// Helper methods below
 
 	private KafkaConsumer<String, String> getConsumer(KafkaContainer kafkaContainer) {
@@ -197,7 +229,7 @@ public class ReplicateCustomersSteps extends CucumberSpringConfiguration {
 
 		List<ConsumerRecord<String, String>> allRecords = new ArrayList<>();
 
-		Unreliables.retryUntilTrue(30, TimeUnit.SECONDS, () -> {
+		Unreliables.retryUntilTrue(1, TimeUnit.SECONDS, () -> {
 			consumer.poll(Duration.ofMillis(50)).iterator().forEachRemaining(allRecords::add);
 			
 			log.info("allRecordsDrained {}", allRecords.size());

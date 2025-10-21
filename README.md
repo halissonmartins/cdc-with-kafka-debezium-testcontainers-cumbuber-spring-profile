@@ -99,7 +99,17 @@ This repository is ideal for developers looking to explore or implement CDC solu
 - https://medium.com/@jignect/mastering-bdd-with-cucumber-and-java-advanced-techniques-for-scalable-test-automation-5ac447746f0f
 
 ## TODO
-- [ ] Debezium Connector, Sink and Kafka ingestion
+- [X] Debezium Connect container, Connector and Sink
+- [ ] In test source connector use same properties that from_source.json
+- [ ] Fix problem that not replicate when running the application
+- [ ] Kafka ingestion with add timestamp column
+- [X] Use Confluent Kafka
+- [ ] Use Confluent Connect container, Connector and Sink
+- [ ] Use MS SQL as source database
+- [ ] Use DB2 as target database
+- [ ] Fix problem when build with GitHub Actions
+- [ ] Add playground projects
+- [ ] Configure to delete all containers when application stop (integration Spring and Compose)
 
 
 

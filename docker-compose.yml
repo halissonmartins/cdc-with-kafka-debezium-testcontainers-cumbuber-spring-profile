@@ -1,6 +1,7 @@
 services:
   postgres_source:
     image: postgres:18
+    container_name: postgres_source
     restart: always
     environment:
       POSTGRES_DB: customer_source_db
@@ -21,6 +22,7 @@ services:
       
   postgres_target:
     image: postgres:18
+    container_name: postgres_target
     restart: always
     environment:
       POSTGRES_DB: customer_target_db
@@ -38,6 +40,105 @@ services:
       - "postgres"
       - "-c"
       - "wal_level=logical"
+
+  kafka:
+    image: 'bitnami/kafka:latest'
+    container_name: kafka
+    environment:
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+    ports:
+      - 9094:9094
+      - 9092:9092
+    expose:
+      - 9094
+      - 9092
+    networks:
+      - testcontainers_network
+
+#  zookeeper:
+#    image: confluentinc/cp-zookeeper:7.9.2
+#    container_name: zookeeper
+#    environment:
+#      ZOOKEEPER_CLIENT_PORT: 2181
+#      ZOOKEEPER_TICK_TIME: 2000
+#    networks:
+#      - testcontainers_network
+#
+#  kafka:
+#    image: confluentinc/cp-kafka:7.9.2
+#    container_name: kafka
+#    depends_on:
+#      - zookeeper
+#    environment:
+#      KAFKA_BROKER_ID: 1
+#      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+#      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+#      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+#    ports:
+#      - "9092:9092"
+#    expose:
+#      - 9092
+#    networks:
+#      - testcontainers_network
+
+  debezium-connect:
+    image: quay.io/debezium/connect:3.3.1.Final
+    container_name: debezium-connect
+    depends_on:
+      - kafka
+      - postgres_source
+      - postgres_target
+    environment:
+      - BOOTSTRAP_SERVERS=kafka:9092
+      - GROUP_ID=1
+      - CONFIG_STORAGE_TOPIC=my_connect_configs
+      - OFFSET_STORAGE_TOPIC=my_connect_offsets
+      - STATUS_STORAGE_TOPIC=my_connect_statuses
+      - KEY_CONVERTER=org.apache.kafka.connect.json.JsonConverter
+      - VALUE_CONVERTER=org.apache.kafka.connect.json.JsonConverter
+      - VALUE_CONVERTER_SCHEMAS_ENABLE=false
+    ports:
+      - "8083:8083"
+    healthcheck:
+      test: curl -f http://debezium-connect:8083/connectors || exit 1
+      interval: 20s
+      timeout: 50s
+      retries: 10
+      start_period: 10s
+    networks:
+      - testcontainers_network
+    command:
+      - bash
+      - -c
+      - |
+        echo "Installing JDBC Sink Connector..."
+        confluent-hub install debezium/debezium-connector-jdbc:latest --no-prompt
+        echo "Starting Debezium Connect..."
+        /docker-entrypoint.sh start
+
+  kafka-add-connectors:
+    container_name: kafka-add-connectors
+    image: curlimages/curl:latest
+    volumes:
+      - ./cdc/:/cdc
+    command:
+      - sh
+      - -c
+      - |
+        curl http://debezium-connect:8083/connectors -H "Content-Type:application/json; charset=utf-8" -d @/cdc/from_source.json &&
+        sleep 1 &&
+        curl http://debezium-connect:8083/connectors -H "Content-Type:application/json; charset=utf-8" -d @/cdc/to_target.json 
+    depends_on:
+      debezium-connect:
+        condition: service_healthy
+    networks:
+      - testcontainers_network
 
 networks:
   testcontainers_network:
