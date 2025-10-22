@@ -36,10 +36,6 @@ services:
       - ./src/main/resources/db/init_target.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - testcontainers_network
-    command:
-      - "postgres"
-      - "-c"
-      - "wal_level=logical"
 
   kafka:
     image: 'bitnami/kafka:latest'
