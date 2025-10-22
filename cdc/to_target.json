@@ -3,7 +3,7 @@
   "config": {
     "connector.class": "io.debezium.connector.jdbc.JdbcSinkConnector",
     "tasks.max": "1",
-    "topics": "to-replication-customer-topic",
+    "topics": "to-replication-customer",
 	"collection.name.format": "testcontainers.customers",
 	"primary.key.mode": "record_value",
 	"primary.key.fields": "id",
@@ -13,6 +13,7 @@
 	"slot.name": "to_source_connector_slot",
     "insert.mode": "insert",
     "value.converter": "org.apache.kafka.connect.json.JsonConverter",
-    "value.converter.schemas.enable": "true"
+    "value.converter.schemas.enable": "true",
+	"errors.log.enable": "true"
   }
 }

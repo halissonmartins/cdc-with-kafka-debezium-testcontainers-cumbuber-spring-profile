@@ -23,6 +23,7 @@
 	"slot.name": "from_application_connector_slot",
 	"value.converter": "org.apache.kafka.connect.json.JsonConverter",
 	"value.converter.schemas.enable": "true",
-	"time.precision.mode":"connect"
+	"time.precision.mode":"connect",
+	"errors.log.enable": "true"
   }
 }
