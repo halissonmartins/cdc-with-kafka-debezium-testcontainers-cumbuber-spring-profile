@@ -1,12 +1,20 @@
 package br.com.halisson;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.LinkedHashMap;
+import java.util.Optional;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.JsonPath;
 
 import lombok.RequiredArgsConstructor;
@@ -25,28 +33,57 @@ public class CustomerReplicationHandler {
     	String value = consumerRecord.value();
         log.info("received payload={}", value);
         
-//		String data = transform(value); 
-//		log.info("Sending data={}", data);
+        Optional<String> optionalJsonTrasnformed = transform(value); 
         
-		kafkaTemplate.send(Constants.TO_TOPIC_NAME, value);
+        if(optionalJsonTrasnformed.isPresent()) {
+			log.info("Sending data={}", optionalJsonTrasnformed.get());
+	        
+			kafkaTemplate.send(Constants.TO_TOPIC_NAME, optionalJsonTrasnformed.get());
+        }
     }
 
-	private String transform(String value) {
+	private Optional<String> transform(String jsonBefore) {
         
-//        String schema = JsonPath.<String>read(value, "$.source.schema");
-//        log.info("received payload schema={}", schema);
-//        String table = JsonPath.<String>read(value, "$.source.table");
-//        log.info("received payload table={}", table);
-        LinkedHashMap<String, Object> afterLinkedHashMap = JsonPath.<LinkedHashMap<String, Object>>read(value, "$.after");
-        log.info("received payload afterJson={}", afterLinkedHashMap);
-        
-        Integer id = (Integer) afterLinkedHashMap.get("id");//TODO it's a problema if return a LONG		
-		String name = (String) afterLinkedHashMap.get("name");
-		String email = (String) afterLinkedHashMap.get("email");
+        ObjectMapper mapper = new ObjectMapper();
+
+        // Convert the string JSON in tree manipulable
+		try {
+			JsonNode rootNode = mapper.readTree(jsonBefore);
+	        ObjectNode schemaNode = (ObjectNode) rootNode.get("schema");
+	        ObjectNode payloadNode = (ObjectNode) rootNode.get("payload");
+	
+	        // 1️ Add the field "created_at" in payload
+	        payloadNode.put("updated_at", 
+	        		LocalDateTime.now().atZone(
+	        				ZoneId.systemDefault()).toInstant().toEpochMilli());
+	
+	        // 2️ Add the field "created_at" in definition schema
+	        ArrayNode fieldsArray = (ArrayNode) schemaNode.get("fields");
+	
+	        ObjectNode createdAtField = mapper.createObjectNode();
+	        createdAtField.put("field", "updated_at");
+	        createdAtField.put("name", "org.apache.kafka.connect.data.Timestamp");
+	        createdAtField.put("optional", false);
+	        createdAtField.put("type", "int64");
+	        createdAtField.put("version", 1);
+	
+	        fieldsArray.add(createdAtField);
+	
+	        //3️ Reorder the keys 
+	        ObjectNode newRoot = mapper.createObjectNode();
+	        newRoot.set("payload", payloadNode);
+	        newRoot.set("schema", schemaNode);
+	
+	        //4️ Converts back to JSON String
+	        String jsonAfter = mapper.writeValueAsString(newRoot);
+	
+			return Optional.of(jsonAfter);
 		
-		log.info("received payload after={}_{}_{}", id, name, email);
-        
-		return String.format(Constants.JSON_MESSAGE_TEMPLATE, id, name, email);
+		} catch (JsonProcessingException e) {
+			log.error(e.getMessage(), e);
+			
+			return Optional.empty();
+		}
         
 	}
 

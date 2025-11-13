@@ -102,7 +102,8 @@ This repository is ideal for developers looking to explore or implement CDC solu
 - [X] Debezium Connect container, Connector and Sink
 - [ ] In test source connector use same properties that from_source.json
 - [X] Fix problem that not replicate when running the application
-- [ ] Kafka ingestion with add timestamp column
+- [X] Kafka ingestion with add timestamp column
+- [ ] Fix problem with time zone in timestamp column
 - [X] Use Confluent Kafka
 - [ ] Use Confluent Connect container, Connector and Sink
 - [ ] Use MS SQL as source database
