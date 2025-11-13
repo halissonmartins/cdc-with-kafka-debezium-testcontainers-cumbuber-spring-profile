@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @Testcontainers
 public abstract class ContainersConfiguration {
 
+	private static final String TZ_AMERICA_SAO_PAULO = "America/Sao_Paulo";
 	private static final String TABLE_NAME_CUSTOMERS = "testcontainers.customers";
 	private static final String CONNECTOR_NAME = "my-connector";
 	private static final String CONNECTOR_SINK_NAME = "jdbc-my-sink";
@@ -45,7 +46,9 @@ public abstract class ContainersConfiguration {
 			.withLogConsumer(new Slf4jLogConsumer(log).withPrefix("Postgres-Source"))
 			.withDatabaseName("customer_source_db")
 			.withCommand("postgres -c wal_level=logical")
-			.withReuse(true);
+			.withReuse(true)
+			.withEnv("TZ", TZ_AMERICA_SAO_PAULO)
+			.withEnv("PGTZ", TZ_AMERICA_SAO_PAULO);
 	
 	@Container
 	public static final PostgreSQLContainer<?> POSTGRES_TARGET = new PostgreSQLContainer<>("postgres:18")
@@ -57,7 +60,9 @@ public abstract class ContainersConfiguration {
 			"/docker-entrypoint-initdb.d/init.sql")
 	.withLogConsumer(new Slf4jLogConsumer(log).withPrefix("Postgres-Target"))
 	.withDatabaseName("customer_target_db")
-	.withReuse(true);
+	.withReuse(true)
+	.withEnv("TZ", TZ_AMERICA_SAO_PAULO)
+	.withEnv("PGTZ", TZ_AMERICA_SAO_PAULO);
 
 	@Container
 	public static final KafkaContainer KAFKA = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.9.4"))
@@ -114,7 +119,12 @@ public abstract class ContainersConfiguration {
         	    .with("connection.password", POSTGRES_TARGET.getPassword())
         	    .with("insert.mode", "upsert")
         	    .with("value.converter", "org.apache.kafka.connect.json.JsonConverter")
-        	    .with("value.converter.schemas.enable", "true");
+        	    .with("value.converter.schemas.enable", "true")
+        	    .with("transforms", "timestamp")
+	    		.with("transforms.timestamp.type", "org.apache.kafka.connect.transforms.TimestampConverter$Value")
+				.with("transforms.timestamp.target.type", "Timestamp")
+				.with("transforms.timestamp.field", "updated_at")
+				.with("transforms.timestamp.format", "yyyy-MM-dd HH:mm:ss.SSS");
 
         log.info("\n============================" + "\n######## REGISTRING SINK CONNECTOR" + "\n============================");
         DEBEZIUM.registerConnector(CONNECTOR_SINK_NAME, jdbcSinkConfig);

@@ -6,9 +6,13 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertTrue;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -146,7 +150,8 @@ public class ReplicateCustomersSteps extends CucumberSpringConfiguration {
 			
             assertThat(rs.next()).isTrue();
             assertThat(rs.getString("name")).isEqualTo(customerInsertionDto.name());
-            assertThat(rs.getString("email")).isEqualTo(customerInsertionDto.email());
+            assertThat(rs.getString("email")).isEqualTo(customerInsertionDto.email());           
+            assertThat(rs.getDate("updated_at")).isNotNull();
         }
 	}
 	
@@ -209,7 +214,8 @@ public class ReplicateCustomersSteps extends CucumberSpringConfiguration {
         	
 			ResultSet rs = conn.createStatement().executeQuery(String.format(QUERIE, customerUpdateDto.id()));
             assertThat(rs.next()).isTrue();
-            assertThat(rs.getString("email")).isEqualTo(EMAIL_TO_UPDATE);
+            assertThat(rs.getString("email")).isEqualTo(EMAIL_TO_UPDATE);			
+			assertThat(rs.getTimestamp("updated_at")).isNotNull();
         }
 	}
 	

@@ -14,6 +14,11 @@
     "insert.mode": "insert",
     "value.converter": "org.apache.kafka.connect.json.JsonConverter",
     "value.converter.schemas.enable": "true",
+	"transforms":"timestamp",
+	"transforms.timestamp.type":"org.apache.kafka.connect.transforms.TimestampConverter$Value",
+	"transforms.timestamp.target.type":"Timestamp",
+	"transforms.timestamp.field":"created_at",
+	"transforms.timestamp.format":"yyyy-MM-dd HH:mm:ss.SSS",
 	"errors.log.enable": "true"
   }
 }
