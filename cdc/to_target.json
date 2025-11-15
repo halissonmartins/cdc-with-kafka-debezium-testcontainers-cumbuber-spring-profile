@@ -19,6 +19,7 @@
 	"transforms.timestamp.target.type":"Timestamp",
 	"transforms.timestamp.field":"created_at",
 	"transforms.timestamp.format":"yyyy-MM-dd HH:mm:ss.SSS",
+	"transforms.timestamp.timezone": "America/Sao_Paulo",
 	"errors.log.enable": "true"
   }
 }

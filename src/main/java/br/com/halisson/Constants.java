@@ -4,6 +4,7 @@ public class Constants {
 	
 	public static final String TO_TOPIC_NAME = "to-replication-customer";
 	public static final String FROM_TOPIC_NAME = "from.testcontainers.customers";
+	public static final String TZ_AMERICA_SAO_PAULO = "America/Sao_Paulo";
 	
 	public static final String JSON_MESSAGE_TEMPLATE = """
 			{
