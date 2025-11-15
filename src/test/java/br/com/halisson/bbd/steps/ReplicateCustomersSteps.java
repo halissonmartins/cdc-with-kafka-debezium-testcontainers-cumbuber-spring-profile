@@ -1,16 +1,14 @@
 package br.com.halisson.bbd.steps;
 
+import static br.com.halisson.Constants.TZ_AMERICA_SAO_PAULO;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertTrue;
-import static br.com.halisson.Constants.TZ_AMERICA_SAO_PAULO;
 
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
-import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;

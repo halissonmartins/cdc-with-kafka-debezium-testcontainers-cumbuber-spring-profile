@@ -103,15 +103,11 @@ This repository is ideal for developers looking to explore or implement CDC solu
 - [ ] In test source connector use same properties that from_source.json
 - [X] Fix problem that not replicate when running the application
 - [X] Kafka ingestion with add timestamp column
-- [ ] Fix problem with time zone in timestamp column
+- [X] Fix problem with time zone in timestamp column
 - [X] Use Confluent Kafka
 - [ ] Use Confluent Connect container, Connector and Sink
-- [ ] Use MS SQL as source database
+- [ ] Use MS SQL Server as source database
 - [ ] Use DB2 as target database
 - [X] Fix problem when build with GitHub Actions
 - [ ] Add playground projects
 - [ ] Configure to delete all containers when application stop (integration Spring and Compose)
-
-
-
-- Scenario Outline?

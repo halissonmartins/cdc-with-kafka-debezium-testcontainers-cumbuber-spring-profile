@@ -98,7 +98,8 @@ public abstract class ContainersConfiguration {
         		.with("value.converter", "org.apache.kafka.connect.json.JsonConverter")
         		.with("value.converter.schemas.enable", "true")
         		.with("table.include.list", TABLE_NAME_CUSTOMERS)
-				.with("topic.prefix", TOPIC_PREFIX);
+				.with("topic.prefix", TOPIC_PREFIX)
+				.with("errors.log.enable", "true");
 		
 		log.info("\n============================" + "\n######## REGISTRING CONNECTOR" + "\n============================");
 		DEBEZIUM.registerConnector(CONNECTOR_NAME, connector);	
@@ -125,7 +126,8 @@ public abstract class ContainersConfiguration {
 				.with("transforms.timestamp.target.type", "Timestamp")
 				.with("transforms.timestamp.field", "updated_at")
 				.with("transforms.timestamp.format", "yyyy-MM-dd HH:mm:ss.SSSXXX")
-				.with("transforms.timestamp.timezone", "America/Sao_Paulo");
+				.with("transforms.timestamp.timezone", "America/Sao_Paulo")
+				.with("errors.log.enable", "true");
 
         log.info("\n============================" + "\n######## REGISTRING SINK CONNECTOR" + "\n============================");
         DEBEZIUM.registerConnector(CONNECTOR_SINK_NAME, jdbcSinkConfig);
