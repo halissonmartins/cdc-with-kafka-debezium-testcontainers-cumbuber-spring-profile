@@ -1,8 +1,9 @@
 package br.com.halisson;
 
+import static br.com.halisson.Constants.TZ_AMERICA_SAO_PAULO;
+
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.LinkedHashMap;
 import java.util.Optional;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -15,7 +16,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.jayway.jsonpath.JsonPath;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,10 +52,13 @@ public class CustomerReplicationHandler {
 	        ObjectNode schemaNode = (ObjectNode) rootNode.get("schema");
 	        ObjectNode payloadNode = (ObjectNode) rootNode.get("payload");
 	
-	        // 1️ Add the field "created_at" in payload
-	        payloadNode.put("updated_at", 
-	        		LocalDateTime.now().atZone(
-	        				ZoneId.systemDefault()).toInstant().toEpochMilli());
+	        // 1️ Add the field "updated_at" in payload
+	        LocalDateTime nowLocalDateTime = LocalDateTime.now(ZoneId.of(TZ_AMERICA_SAO_PAULO));
+	        log.info("nowLocalDateTime: {}", nowLocalDateTime.toString()); 
+	        
+			payloadNode.put("updated_at", 
+	        		nowLocalDateTime.atZone(
+	        				ZoneId.of(TZ_AMERICA_SAO_PAULO)).toInstant().toEpochMilli());
 	
 	        // 2️ Add the field "created_at" in definition schema
 	        ArrayNode fieldsArray = (ArrayNode) schemaNode.get("fields");
