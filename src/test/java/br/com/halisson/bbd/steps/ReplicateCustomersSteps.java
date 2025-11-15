@@ -16,9 +16,11 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -152,15 +154,17 @@ public class ReplicateCustomersSteps extends CucumberSpringConfiguration {
             assertThat(rs.next()).isTrue();
             assertThat(rs.getString("name")).isEqualTo(customerInsertionDto.name());
             assertThat(rs.getString("email")).isEqualTo(customerInsertionDto.email());           
-            assertThat(rs.getDate("updated_at")).isNotNull();
+            assertThat(rs.getTimestamp("updated_at", 
+            		Calendar.getInstance(TimeZone.getTimeZone(TZ_AMERICA_SAO_PAULO)))).isNotNull();
             
             LocalDateTime now = LocalDateTime.now(ZoneId.of(TZ_AMERICA_SAO_PAULO));
-            log.debug("NowDateTZ: {}", now.toString());         
+            log.info("NowDateTZ: {}", now.toString());         
             
 			long nowMillis = now.atZone(ZoneId.of(TZ_AMERICA_SAO_PAULO))
 					.toInstant().toEpochMilli();
             
-            assertThat(rs.getTimestamp("updated_at")).isAfter(new java.sql.Timestamp(nowMillis));
+            assertThat(rs.getTimestamp("updated_at", Calendar.getInstance(TimeZone.getTimeZone(TZ_AMERICA_SAO_PAULO))))
+            	.isBefore(new java.sql.Timestamp(nowMillis));
         }
 	}
 	
@@ -227,11 +231,12 @@ public class ReplicateCustomersSteps extends CucumberSpringConfiguration {
 			assertThat(rs.getTimestamp("updated_at")).isNotNull();			
             
             LocalDateTime now = LocalDateTime.now(ZoneId.of(TZ_AMERICA_SAO_PAULO));
-            log.debug("NowDateTZ: {}", now.toString());
+            log.info("NowDateTZ: {}", now.toString());
 			long nowMillis = now.atZone(ZoneId.of(TZ_AMERICA_SAO_PAULO))
 					.toInstant().toEpochMilli();
             
-            assertThat(rs.getTimestamp("updated_at")).isAfter(new java.sql.Timestamp(nowMillis));
+            assertThat(rs.getTimestamp("updated_at", Calendar.getInstance(TimeZone.getTimeZone(TZ_AMERICA_SAO_PAULO))))
+            	.isBefore(new java.sql.Timestamp(nowMillis));
         }
 	}
 	

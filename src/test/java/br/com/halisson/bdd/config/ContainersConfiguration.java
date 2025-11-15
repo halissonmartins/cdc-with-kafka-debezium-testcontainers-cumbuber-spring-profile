@@ -124,7 +124,7 @@ public abstract class ContainersConfiguration {
 	    		.with("transforms.timestamp.type", "org.apache.kafka.connect.transforms.TimestampConverter$Value")
 				.with("transforms.timestamp.target.type", "Timestamp")
 				.with("transforms.timestamp.field", "updated_at")
-				.with("transforms.timestamp.format", "yyyy-MM-dd HH:mm:ss.SSS")
+				.with("transforms.timestamp.format", "yyyy-MM-dd HH:mm:ss.SSSXXX")
 				.with("transforms.timestamp.timezone", "America/Sao_Paulo");
 
         log.info("\n============================" + "\n######## REGISTRING SINK CONNECTOR" + "\n============================");
